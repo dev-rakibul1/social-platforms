@@ -1,0 +1,135 @@
+/*
+  App-specific CSS overrides.
+  Goal: Improve comments + replies readability while staying within the template theme.
+*/
+
+/* Comment cards (applied by JS via `._sp_comment`). */
+._comment_main._sp_comment {
+  margin-top: 14px;
+}
+
+._comment_main._sp_comment._sp_comment--reply {
+  margin-top: 10px;
+  margin-left: clamp(12px, 3vw, 26px);
+}
+
+._comment_main._sp_comment ._comment_details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 100%;
+  margin: 0;
+  padding: 12px 14px;
+}
+
+/* Avatar rendering: make uploaded profile images look clean. */
+._comment_main._sp_comment ._comment_img1 {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Make like counter + reactions feel like a compact pill, aligned to the right. */
+._comment_main._sp_comment ._total_reactions {
+  position: static !important;
+  right: auto;
+  align-self: flex-end;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: rgba(149, 157, 165, 0.16) 0px 6px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+/* Keep reply/like actions in-flow (no absolute positioning gaps). */
+._comment_main._sp_comment ._comment_reply_num {
+  position: static !important;
+  bottom: auto;
+}
+
+/* Keep actions as a subtle footer row inside the bubble. */
+._comment_main._sp_comment ._comment_reply {
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  padding-top: 8px;
+}
+
+._comment_main._sp_comment ._comment_reply_list {
+  gap: 12px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+._comment_main._sp_comment ._comment_reply_list li {
+  margin: 0;
+}
+
+/* Push time stamp to the right (Share is hidden in JS). */
+._comment_main._sp_comment ._comment_reply_list li:last-child {
+  margin-left: auto;
+}
+
+._comment_main._sp_comment ._comment_reply_list li span {
+  font-size: 13px;
+}
+
+/* Text wrapping: keep user newlines, avoid aggressive word-breaks. */
+._comment_main._sp_comment ._comment_status_text,
+._comment_main._sp_comment ._comment_status_text span {
+  word-break: break-word;
+  white-space: pre-wrap;
+  line-height: 1.35;
+}
+
+/* Reply card treatment (subtle accent + compact layout). */
+._comment_main._sp_comment._sp_comment--reply ._comment_image {
+  flex: 0 0 28px;
+  height: 28px;
+  width: 28px;
+  border-color: rgba(55, 125, 255, 0.18);
+}
+
+._comment_main._sp_comment._sp_comment--reply ._comment_img1 {
+  max-width: 28px;
+}
+
+._comment_main._sp_comment._sp_comment--reply ._comment_area {
+  margin: 0 0 0 12px;
+  position: relative;
+  padding: 0 0 0 12px;
+}
+
+._comment_main._sp_comment._sp_comment--reply ._comment_area::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  border-radius: 2px;
+  background: rgba(55, 125, 255, 0.18);
+}
+
+._comment_main._sp_comment._sp_comment--reply ._comment_details {
+  background: #fff;
+  border: 1px solid rgba(55, 125, 255, 0.14);
+  border-radius: 16px;
+  padding: 10px 12px;
+}
+
+._comment_main._sp_comment._sp_comment--reply ._comment_name_title {
+  font-size: 13px;
+}
+
+._comment_main._sp_comment._sp_comment--reply ._comment_status_text {
+  font-size: 13px;
+}
+
+/* Reply composer: keep it visually tied to the comment. */
+._comment_main._sp_comment ._feed_inner_comment_box {
+  margin-top: 10px;
+}
+
+._comment_main._sp_comment ._feed_inner_comment_box_content_txt textarea._comment_textarea {
+  border-radius: 14px;
+}

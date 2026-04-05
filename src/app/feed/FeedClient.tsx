@@ -1712,5 +1712,5 @@ export default function FeedClient({ backendOrigin }: { backendOrigin: string })
     }
   }, [backendOrigin, router])
 
-  return <div dangerouslySetInnerHTML={{ __html: FEED_HTML }} />
+  return <div suppressHydrationWarning dangerouslySetInnerHTML={{ __html: FEED_HTML }} />
 }

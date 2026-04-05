@@ -8,16 +8,22 @@ const normalizeBaseUrl = (value: string): string => {
 }
 
 const getBackendOrigin = (): string => {
-  const apiBase = normalizeBaseUrl(process.env.BACKEND_API_URL ?? 'http://localhost:5000/api/v1')
+  const apiBase = normalizeBaseUrl(
+    process.env.BACKEND_API_URL ?? 'https://testapi.bpsnx.com/api/v1/',
+  )
 
   try {
     return new URL(apiBase).origin
   } catch {
-    return 'http://localhost:5000'
+    return 'https://testapi.bpsnx.com/'
   }
 }
 
-export default async function UserProfilePage({ params }: { params: Promise<{ userId: string }> }) {
+export default async function UserProfilePage({
+  params,
+}: {
+  params: Promise<{ userId: string }>
+}) {
   const store = await cookies()
   const token = store.get('access_token')?.value ?? null
 

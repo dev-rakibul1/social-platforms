@@ -2,6 +2,27 @@
 
 Next.js App Router frontend using the provided Bootstrap HTML template (design preserved).
 
+## What I Built
+
+This frontend turns the static template into a working social app UI with:
+
+- login and registration
+- protected feed
+- profile page
+- public user profile page
+- create, edit, and delete post flows
+- comments, replies, and likes
+- image upload support through the backend API
+
+The app talks to the backend through Next.js Route Handlers in `src/app/api/*`, which lets the browser call same-origin endpoints while the Next server forwards requests to the API.
+
+## Decisions Made
+
+- Preserved the supplied template structure to match the original design rather than rebuilding the UI from scratch.
+- Used route handlers as a proxy layer so backend URLs and token-aware requests stay on the server side.
+- Used an `httpOnly` auth cookie for protected flows.
+- Kept `BACKEND_API_URL` as the only frontend environment variable to simplify Vercel deployment.
+
 ## Requirements
 
 - Node.js `>= 20.9.0`
@@ -31,7 +52,6 @@ The Next app proxies the Express API via Route Handlers:
 
 Configure the backend URL in `.env.local`:
 
-- `BACKEND_API_URL=http://localhost:5000/api/v1`
-- `NEXT_PUBLIC_BACKEND_ORIGIN=http://localhost:5000` (for rendering uploaded image URLs)
+- `BACKEND_API_URL=https://testapi.bpsnx.com/api/v1/`
 
 # social-platforms

@@ -9,13 +9,13 @@ const normalizeBaseUrl = (value: string): string => {
 
 const getBackendOrigin = (): string => {
   const apiBase = normalizeBaseUrl(
-    process.env.BACKEND_API_URL ?? 'http://localhost:5000/api/v1'
+    process.env.BACKEND_API_URL ?? 'https://testapi.bpsnx.com/api/v1/',
   )
 
   try {
     return new URL(apiBase).origin
   } catch {
-    return 'http://localhost:5000'
+    return 'https://testapi.bpsnx.com/'
   }
 }
 

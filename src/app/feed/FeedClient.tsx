@@ -4,6 +4,13 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { FEED_HTML } from './feedHtml'
 
+type ComposerImage = {
+  contentBase64: string
+  mimeType: string
+  originalName?: string
+  previewUrl: string
+}
+
 type FeedPost = {
   id: string
   text: string
@@ -172,11 +179,7 @@ export default function FeedClient({ backendOrigin }: { backendOrigin: string })
 
   useEffect(() => {
     let postTemplate: HTMLElement | null = null
-    let selectedImage: {
-      contentBase64: string
-      mimeType: string
-      originalName?: string
-    } | null = null
+    let selectedImage: ComposerImage | null = null
     let currentMeId: string | null = null
     let composerVisibility: 'PUBLIC' | 'PRIVATE' = 'PUBLIC'
     let nextPostsCursor: string | null = null
@@ -259,6 +262,49 @@ export default function FeedClient({ backendOrigin }: { backendOrigin: string })
 
     const clearComposerStatus = () => {
       document.querySelector('#_composer_status')?.remove()
+    }
+
+    const syncComposerVisibilityControls = () => {
+      document
+        .querySelectorAll('[data-composer-visibility-select="1"]')
+        .forEach((node) => ((node as HTMLSelectElement).value = composerVisibility))
+    }
+
+    const setComposerPhotoButtonsActive = (active: boolean) => {
+      document
+        .querySelectorAll('._feed_inner_text_area_bottom_photo')
+        .forEach((node) => node.classList.toggle('_sp_composer_action_active', active))
+    }
+
+    const renderComposerImagePreview = () => {
+      const card = document.querySelector('#_composer_preview_card') as HTMLElement | null
+      const image = document.querySelector('#_composer_preview_image') as HTMLImageElement | null
+      const name = document.querySelector('#_composer_preview_name') as HTMLElement | null
+
+      if (!card || !image || !name) return
+
+      if (!selectedImage?.previewUrl) {
+        card.classList.add('d-none')
+        image.removeAttribute('src')
+        name.textContent = ''
+        setComposerPhotoButtonsActive(false)
+        return
+      }
+
+      image.src = selectedImage.previewUrl
+      name.textContent = selectedImage.originalName ?? 'Selected image'
+      card.classList.remove('d-none')
+      setComposerPhotoButtonsActive(true)
+    }
+
+    const clearSelectedComposerImage = (fileInput?: HTMLInputElement) => {
+      if (selectedImage?.previewUrl) {
+        URL.revokeObjectURL(selectedImage.previewUrl)
+      }
+
+      selectedImage = null
+      if (fileInput) fileInput.value = ''
+      renderComposerImagePreview()
     }
 
     const setFeedStatus = (className: string, html: string) => {
@@ -1407,26 +1453,25 @@ export default function FeedClient({ backendOrigin }: { backendOrigin: string })
     }
 
     const ensureComposerControls = () => {
-      const wrappers = Array.from(
-        document.querySelectorAll('._feed_inner_text_area_btn')
+      const slots = Array.from(
+        document.querySelectorAll('[data-composer-audience-slot="1"]')
       ) as HTMLElement[]
 
-      wrappers.forEach((wrapper) => {
-        if (wrapper.querySelector('[data-composer-visibility="1"]')) return
-
-        wrapper.classList.add('d-flex', 'align-items-center', 'gap-2', 'flex-wrap')
+      slots.forEach((slot) => {
+        if (slot.querySelector('[data-composer-visibility="1"]')) return
 
         const audienceWrap = document.createElement('div')
         audienceWrap.setAttribute('data-composer-visibility', '1')
-        audienceWrap.className = 'd-flex align-items-center gap-2 me-2'
+        audienceWrap.className = '_sp_composer_audience'
 
         const label = document.createElement('span')
-        label.className = 'small text-muted'
+        label.className = '_sp_composer_audience_label'
         label.textContent = 'Audience'
 
         const select = document.createElement('select')
-        select.className = 'form-select form-select-sm'
-        select.style.width = '120px'
+        select.className = 'form-select form-select-sm _sp_composer_audience_select'
+        select.setAttribute('data-composer-visibility-select', '1')
+        select.setAttribute('aria-label', 'Choose post audience')
         select.innerHTML = `
           <option value="PUBLIC">Public</option>
           <option value="PRIVATE">Private</option>
@@ -1434,34 +1479,14 @@ export default function FeedClient({ backendOrigin }: { backendOrigin: string })
         select.value = composerVisibility
         select.addEventListener('change', () => {
           composerVisibility = select.value === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC'
-          document
-            .querySelectorAll('[data-composer-visibility="1"] select')
-            .forEach((node) => ((node as HTMLSelectElement).value = composerVisibility))
+          syncComposerVisibilityControls()
         })
 
         audienceWrap.append(label, select)
-        wrapper.insertBefore(audienceWrap, wrapper.firstChild)
+        slot.appendChild(audienceWrap)
       })
-    }
 
-    const setComposerFileStatus = (message: string | null) => {
-      let node = document.querySelector('#_composer_file_status') as HTMLElement | null
-      const composer = document.querySelector('._feed_inner_text_area') as HTMLElement | null
-      if (!composer) return
-
-      if (!node) {
-        node = document.createElement('div')
-        node.id = '_composer_file_status'
-        node.className = 'small text-muted mt-2'
-        composer.insertAdjacentElement('afterend', node)
-      }
-
-      if (!message) {
-        node.remove()
-        return
-      }
-
-      node.textContent = message
+      syncComposerVisibilityControls()
     }
 
     const bindComposer = () => {
@@ -1476,6 +1501,8 @@ export default function FeedClient({ backendOrigin }: { backendOrigin: string })
       const postButtons = Array.from(
         document.querySelectorAll('._feed_inner_text_area_btn_link')
       ) as HTMLButtonElement[]
+      const replaceButton = document.querySelector('#_composer_replace_btn') as HTMLButtonElement | null
+      const removeButton = document.querySelector('#_composer_remove_btn') as HTMLButtonElement | null
 
       const fileInput = document.createElement('input')
       fileInput.type = 'file'
@@ -1484,22 +1511,37 @@ export default function FeedClient({ backendOrigin }: { backendOrigin: string })
       document.body.appendChild(fileInput)
 
       photoButtons.forEach((button) => {
-        button.addEventListener('click', () => fileInput.click())
+        button.addEventListener('click', () => {
+          clearComposerStatus()
+          fileInput.click()
+        })
+      })
+
+      replaceButton?.addEventListener('click', () => fileInput.click())
+      removeButton?.addEventListener('click', () => {
+        clearSelectedComposerImage(fileInput)
+        clearComposerStatus()
       })
 
       fileInput.addEventListener('change', async () => {
         const file = fileInput.files?.[0]
         if (!file) return
 
+        clearComposerStatus()
+        const previewUrl = URL.createObjectURL(file)
+
         try {
+          clearSelectedComposerImage()
           selectedImage = {
             contentBase64: await readFileAsBase64(file),
             mimeType: file.type || 'image/png',
             originalName: file.name,
+            previewUrl,
           }
-          setComposerFileStatus(`Attached image: ${file.name}`)
+          renderComposerImagePreview()
         } catch {
-          selectedImage = null
+          URL.revokeObjectURL(previewUrl)
+          clearSelectedComposerImage(fileInput)
           setComposerStatus('danger', 'Unable to read the selected image.')
         }
       })
@@ -1513,6 +1555,12 @@ export default function FeedClient({ backendOrigin }: { backendOrigin: string })
           const visibility = parsed.usedCommand ? parsed.visibility : composerVisibility
 
           if (!text) {
+            setComposerStatus(
+              'danger',
+              selectedImage
+                ? 'Write something before posting the selected image.'
+                : 'Write something to create a post.'
+            )
             unlockAction(button)
             return
           }
@@ -1527,7 +1575,13 @@ export default function FeedClient({ backendOrigin }: { backendOrigin: string })
               body: JSON.stringify({
                 text,
                 visibility,
-                image: selectedImage ?? undefined,
+                image: selectedImage
+                  ? {
+                      contentBase64: selectedImage.contentBase64,
+                      mimeType: selectedImage.mimeType,
+                      originalName: selectedImage.originalName,
+                    }
+                  : undefined,
               }),
             })
 
@@ -1537,9 +1591,7 @@ export default function FeedClient({ backendOrigin }: { backendOrigin: string })
             }
 
             textarea.value = ''
-            selectedImage = null
-            fileInput.value = ''
-            setComposerFileStatus(null)
+            clearSelectedComposerImage(fileInput)
             setComposerStatus('success', `Post created as ${visibility.toLowerCase()}.`)
             await loadPosts()
           } finally {
@@ -1549,7 +1601,10 @@ export default function FeedClient({ backendOrigin }: { backendOrigin: string })
         })
       })
 
+      renderComposerImagePreview()
+
       return () => {
+        clearSelectedComposerImage()
         fileInput.remove()
       }
     }

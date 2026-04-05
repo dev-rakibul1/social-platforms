@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
+import { FormEvent, Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 type ApiErrorMessage = {
@@ -20,17 +20,18 @@ const getErrorMessage = (value: unknown): string => {
   return 'Something went wrong.'
 }
 
-export default function LoginPage() {
+type LoginPageShellProps = {
+  loggedOut: boolean
+  needsLogin: boolean
+  nextPath: string
+}
+
+function LoginPageShell({ loggedOut, needsLogin, nextPath }: LoginPageShellProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const nextPath = searchParams.get('next')?.trim() || '/feed'
-  const loggedOut = searchParams.get('loggedOut') === '1'
-  const needsLogin = searchParams.get('reason') === 'auth'
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault()
@@ -219,5 +220,27 @@ export default function LoginPage() {
         </div>
       </div>
     </section>
+  )
+}
+
+function LoginPageContent() {
+  const searchParams = useSearchParams()
+
+  return (
+    <LoginPageShell
+      loggedOut={searchParams.get('loggedOut') === '1'}
+      needsLogin={searchParams.get('reason') === 'auth'}
+      nextPath={searchParams.get('next')?.trim() || '/feed'}
+    />
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={<LoginPageShell loggedOut={false} needsLogin={false} nextPath="/feed" />}
+    >
+      <LoginPageContent />
+    </Suspense>
   )
 }

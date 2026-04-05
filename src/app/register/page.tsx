@@ -1,6 +1,6 @@
 'use client'
 
-import { FormEvent, useState } from 'react'
+import { FormEvent, Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 
 type ApiErrorMessage = {
@@ -20,9 +20,8 @@ const getErrorMessage = (value: unknown): string => {
   return 'Something went wrong.'
 }
 
-export default function RegisterPage() {
+function RegisterPageShell({ nextPath }: { nextPath: string }) {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [email, setEmail] = useState('')
@@ -30,8 +29,6 @@ export default function RegisterPage() {
   const [repeatPassword, setRepeatPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  const nextPath = searchParams.get('next')?.trim() || '/feed'
 
   const onSubmit = async (event: FormEvent) => {
     event.preventDefault()
@@ -261,5 +258,18 @@ export default function RegisterPage() {
         </div>
       </div>
     </section>
+  )
+}
+
+function RegisterPageContent() {
+  const searchParams = useSearchParams()
+  return <RegisterPageShell nextPath={searchParams.get('next')?.trim() || '/feed'} />
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<RegisterPageShell nextPath="/feed" />}>
+      <RegisterPageContent />
+    </Suspense>
   )
 }
